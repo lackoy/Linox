@@ -1,0 +1,451 @@
+/*
+    LINOX v2.0 — CSS
+    Aesthetic: Industrial Hacker Terminal
+    Font: JetBrains Mono + Share Tech Mono
+*/
+
+:root {
+    --bg:        #0a0a0a;
+    --bg2:       #0f0f0f;
+    --bg3:       #141414;
+    --bg4:       #1a1a1a;
+    --surface:   #1e1e1e;
+    --border:    #2a2a2a;
+    --border2:   #333;
+    --green:     #00ff88;
+    --green-dim: #00cc6a;
+    --green-mute:#005533;
+    --amber:     #ffb300;
+    --amber-dim: #cc8800;
+    --red:       #ff4444;
+    --blue:      #4488ff;
+    --cyan:      #00ccff;
+    --purple:    #bb88ff;
+    --text:      #e0e0e0;
+    --text-dim:  #888;
+    --text-mute: #444;
+    --prompt:    #00ff88;
+    --font-mono: 'JetBrains Mono', 'Share Tech Mono', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    overflow: hidden;
+    font-size: 13px;
+}
+
+/* ── Matrix Canvas ── */
+#matrix-canvas {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    z-index: 0; opacity: 0.04;
+    pointer-events: none;
+}
+
+/* ── CRT Scanline ── */
+.scanline {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none; z-index: 999;
+}
+
+/* ── OS Wrapper ── */
+.os-wrapper {
+    position: relative; z-index: 10;
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+}
+
+/*  TOP BAR  */
+.topbar {
+    height: 32px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 16px;
+    flex-shrink: 0;
+}
+.topbar-left { display: flex; align-items: center; gap: 8px; min-width: 160px; }
+.os-logo {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.2em;
+    color: var(--green);
+    text-shadow: 0 0 12px rgba(0,255,136,0.4);
+}
+.os-version { font-size: 10px; color: var(--text-mute); }
+
+.topbar-center { flex: 1; display: flex; justify-content: center; }
+.sys-stats { display: flex; gap: 20px; align-items: center; }
+.stat { display: flex; align-items: center; gap: 5px; font-size: 10px; }
+.stat-label { color: var(--text-mute); width: 30px; }
+.stat-bar { width: 50px; height: 4px; background: var(--bg4); border-radius: 2px; overflow: hidden; }
+.stat-fill { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.5s; width: 30%; }
+.stat-val { color: var(--green-dim); min-width: 32px; text-align: right; }
+
+.topbar-right { display: flex; align-items: center; gap: 8px; min-width: 160px; justify-content: flex-end; }
+.clock { font-size: 12px; color: var(--amber); font-weight: 500; letter-spacing: 0.05em; }
+.topbar-sep { color: var(--border2); }
+.uptime-label { font-size: 10px; color: var(--text-mute); }
+
+/*  MAIN LAYOUT */
+.main-layout {
+    flex: 1; display: flex; overflow: hidden;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    width: 200px; min-width: 200px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    transition: width 0.2s, min-width 0.2s;
+    overflow: hidden;
+}
+.sidebar.hidden { width: 0; min-width: 0; }
+
+.sidebar-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.sidebar-title { font-size: 10px; color: var(--text-mute); letter-spacing: 0.12em; }
+.sidebar-toggle-btn {
+    background: none; border: none; color: var(--text-mute);
+    cursor: pointer; font-size: 14px; padding: 0 4px;
+    line-height: 1;
+}
+.sidebar-toggle-btn:hover { color: var(--text); }
+
+.file-tree { flex: 1; overflow-y: auto; padding: 6px 0; }
+.tree-item {
+    padding: 3px 12px; font-size: 12px; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--text-dim);
+    transition: background 0.1s;
+}
+.tree-item:hover { background: var(--bg4); color: var(--text); }
+.tree-item.dir { color: var(--blue); }
+.tree-item.selected { background: var(--bg4); color: var(--green); }
+.tree-indent { display: inline-block; }
+
+/* ── Terminal Area ── */
+.terminal-area {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── Tab Bar ── */
+.tab-bar {
+    height: 34px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-end;
+    flex-shrink: 0;
+}
+.tabs { display: flex; flex: 1; height: 100%; }
+.tab {
+    padding: 0 16px; height: 100%;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-dim);
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    background: var(--bg3);
+    transition: background 0.1s;
+    white-space: nowrap;
+}
+.tab:hover { background: var(--bg4); color: var(--text); }
+.tab.active {
+    background: var(--bg);
+    color: var(--green);
+    border-bottom: 2px solid var(--green);
+    margin-bottom: -1px;
+}
+.tab-close {
+    font-size: 11px; color: var(--text-mute);
+    padding: 0 2px; border-radius: 2px;
+    transition: color 0.1s;
+}
+.tab:hover .tab-close { color: var(--text); }
+.tab-close:hover { color: var(--red) !important; }
+
+.tab-actions {
+    display: flex; align-items: center;
+    padding: 0 8px; gap: 2px;
+}
+.tab-btn {
+    background: none; border: none;
+    color: var(--text-mute); cursor: pointer;
+    font-size: 16px; padding: 4px 6px;
+    border-radius: 3px;
+    transition: color 0.1s, background 0.1s;
+    font-family: var(--font-mono);
+}
+.tab-btn:hover { color: var(--green); background: var(--bg4); }
+
+/* ── Terminals Wrapper ── */
+.terminals-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-height: 200px;
+}
+.terminal-pane {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.15s;
+    height: 100%;
+}
+.terminal-pane.active { opacity: 1; pointer-events: all; }
+
+.terminal-output {
+    flex: 1; overflow-y: auto; padding: 12px 16px;
+    scroll-behavior: smooth;
+}
+.terminal-output::-webkit-scrollbar { width: 4px; }
+.terminal-output::-webkit-scrollbar-track { background: transparent; }
+.terminal-output::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+.out-line {
+        margin: 1px 0; line-height: 1.6;
+    font-size: 13px; word-break: break-all;
+    white-space: pre-wrap;
+}
+.out-line.cmd-echo { color: var(--text); }
+.out-line.success { color: var(--green); }
+.out-line.error   { color: var(--red); }
+.out-line.warning { color: var(--amber); }
+.out-line.info    { color: var(--cyan); }
+.out-line.dim     { color: var(--text-dim); }
+.out-line.system  { color: var(--purple); }
+.out-line.output  { color: var(--text); }
+
+.prompt-span { color: var(--green); font-weight: 500; }
+.path-span   { color: var(--blue); }
+.dollar-span { color: var(--text-dim); }
+
+.terminal-input-line {
+    padding: 6px 16px 12px;
+    display: flex; align-items: center; gap: 0;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.input-prompt { color: var(--green); white-space: nowrap; font-weight: 500; margin-right: 8px; }
+.terminal-input {
+    flex: 1; background: transparent; border: none;
+    color: var(--text); outline: none;
+    font-family: var(--font-mono); font-size: 13px;
+    caret-color: var(--green);
+}
+.terminal-input::selection { background: rgba(0,255,136,0.2); }
+
+/* Autocomplete dropdown */
+.autocomplete-box {
+    position: absolute;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    z-index: 100;
+    max-height: 160px;
+    overflow-y: auto;
+    min-width: 160px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.autocomplete-item {
+    padding: 4px 12px; font-size: 12px; cursor: pointer;
+    color: var(--text-dim); white-space: nowrap;
+}
+.autocomplete-item:hover, .autocomplete-item.selected {
+    background: var(--bg4); color: var(--green);
+}
+.autocomplete-item .ac-type { color: var(--text-mute); font-size: 10px; margin-left: 6px; }
+
+/* ── Right Info Panel ── */
+.info-panel {
+    width: 280px; min-width: 280px;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+.panel-header {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 11px; color: var(--amber); letter-spacing: 0.1em;
+}
+#panel-content {
+    flex: 1; overflow-y: auto; padding: 12px;
+    font-size: 11px; color: var(--text-dim); line-height: 1.8;
+}
+
+/* SSH Panel */
+.ssh-host-list { display: flex; flex-direction: column; gap: 6px; }
+.ssh-host {
+    padding: 8px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color 0.1s;
+}
+.ssh-host:hover { border-color: var(--green-dim); }
+.ssh-host-name { color: var(--green); font-size: 12px; }
+.ssh-host-ip   { color: var(--text-mute); font-size: 10px; }
+.ssh-host-status { font-size: 10px; }
+.ssh-host-status.online { color: var(--green); }
+.ssh-host-status.offline { color: var(--red); }
+.ssh-log { margin-top: 12px; font-size: 11px; }
+.ssh-log-line { margin: 2px 0; }
+
+/* ── Status Bar ── */
+.statusbar {
+    height: 22px;
+    background: var(--green-mute);
+    display: flex; align-items: center;
+    padding: 0 12px;
+    justify-content: space-between;
+    flex-shrink: 0;
+    border-top: 1px solid var(--green-dim);
+}
+.status-left, .status-right { display: flex; align-items: center; gap: 8px; }
+.status-item { font-size: 11px; color: #00ff88; }
+.status-sep  { color: #005533; }
+#status-mode { font-weight: 700; }
+#status-pyodide { color: var(--amber); }
+#status-pyodide.ready { color: var(--green); }
+
+/*  VIM EDITOR  */
+.vim-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+}
+.vim-editor {
+    width: 80%; max-width: 900px;
+    height: 70vh;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    display: flex; flex-direction: column;
+    box-shadow: 0 0 40px rgba(0,255,136,0.1);
+}
+.vim-header {
+    padding: 6px 12px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.vim-filename { color: var(--text); font-size: 13px; }
+.vim-mode { font-size: 11px; font-weight: 700; color: var(--green); letter-spacing: 0.1em; }
+.vim-mode.insert { color: var(--amber); }
+
+.vim-content-wrap {
+    flex: 1; display: flex; overflow: hidden;
+}
+.vim-line-nums {
+    width: 44px; padding: 8px 6px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+    color: var(--text-mute); font-size: 12px;
+    line-height: 1.6; text-align: right;
+    white-space: pre;
+}
+.vim-textarea {
+    flex: 1; background: var(--bg);
+    border: none; outline: none;
+    color: var(--text); font-family: var(--font-mono);
+    font-size: 13px; line-height: 1.6;
+    padding: 8px 12px; resize: none;
+    caret-color: var(--green);
+}
+.vim-statusline {
+    padding: 4px 12px;
+    background: var(--bg3);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text-dim);
+}
+.vim-cmd-line {
+    padding: 4px 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--text);
+}
+#vim-cmd-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: var(--font-mono); font-size: 13px;
+}
+
+/*  TOOLTIP  */
+.cmd-tooltip {
+    position: fixed;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-left: 3px solid var(--amber);
+    padding: 8px 12px;
+    font-size: 11px; color: var(--text);
+    z-index: 200; max-width: 300px;
+    line-height: 1.7; pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.tooltip-cmd  { color: var(--amber); font-weight: 700; }
+.tooltip-desc { color: var(--text-dim); margin-top: 2px; }
+.tooltip-flag { color: var(--cyan); }
+
+/*  MISC  */
+/* ls output grid */
+.ls-grid { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.ls-item { font-size: 13px; }
+.ls-dir  { color: var(--blue); font-weight: 500; }
+.ls-exec { color: var(--green); font-weight: 500; }
+.ls-file { color: var(--text); }
+.ls-link { color: var(--cyan); }
+
+/* ls -la table */
+.ls-table { border-collapse: collapse; }
+.ls-table td { padding: 1px 8px 1px 0; font-size: 12px; white-space: nowrap; }
+.ls-perm { color: var(--text-dim); }
+.ls-size { color: var(--amber-dim); text-align: right; }
+.ls-date { color: var(--text-mute); }
+.ls-name-dir  { color: var(--blue); }
+.ls-name-exec { color: var(--green); }
+.ls-name-file { color: var(--text); }
+
+/* man page */
+.man-page { color: var(--text); }
+.man-section { color: var(--amber); font-weight: 700; margin-top: 8px; }
+.man-body { color: var(--text-dim); padding-left: 16px; }
+.man-option { color: var(--green); }
+
+/* process list */
+.proc-table td { padding: 1px 12px 1px 0; font-size: 12px; }
+.proc-pid  { color: var(--amber); }
+.proc-name { color: var(--text); }
+.proc-cpu  { color: var(--green-dim); text-align: right; }
+
+/* boot animation */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.blink { animation: blink 1s step-end infinite; }
+
+/* ping animation */
+@keyframes ping-line {
+    from { opacity: 0; transform: translateX(-4px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.ping-line { animation: ping-line 0.15s ease-out; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar { display: none; }
+    .sys-stats { display: none; }
+}
